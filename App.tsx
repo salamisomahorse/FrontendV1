@@ -3,37 +3,29 @@ import React, { useState } from 'react';
 import { Layout } from './components/Layout';
 import { LandingPage } from './pages/LandingPage';
 import { SignupPage } from './pages/SignupPage';
-import { EngineerDashboard } from './pages/ScholarDashboard'; // Reused file as Engineer Dashboard
+import { EngineerDashboard } from './pages/ScholarDashboard'; 
 import { IndustryPortal } from './pages/IndustryPortal';
 import { AdminDashboard } from './pages/AdminDashboard';
 import { ProfilePage } from './pages/ProfilePage';
+import { CreateProjectPage } from './pages/CreateProjectPage';
 import { User, UserRole, Notification } from './types';
 import { Card, Button, Input, Toast } from './components/UI';
 
-// Mock Auth Data
 const MOCK_USERS: Record<string, User> = {
   engineer: { 
-    id: '1', 
-    name: 'John Doe', 
-    email: 'john@nexus.africa', 
-    role: 'ENGINEER',
-    skills: ['Python', 'FastAPI', 'PostgreSQL'],
-    resume: 'john_doe_cv.pdf'
+    id: '1', name: 'John Doe', email: 'john@nexus.africa', role: 'ENGINEER',
+    skills: ['Python', 'FastAPI'], resume: 'john_cv.pdf'
   },
   client: { id: '2', name: 'Tech Corp', email: 'cto@techcorp.com', role: 'CLIENT' },
-  admin: { id: '3', name: 'Admin User', email: 'admin@nexus.africa', role: 'ADMIN' },
+  admin: { id: '3', name: 'Admin', email: 'admin@nexus.africa', role: 'ADMIN' },
 };
 
 export default function App() {
   const [currentPage, setCurrentPage] = useState('landing');
   const [user, setUser] = useState<User | null>(null);
-  
-  // Login State
-  const [email, setEmail] = useState('');
   const [roleSelect, setRoleSelect] = useState<UserRole>('ENGINEER');
+  const [email, setEmail] = useState('');
   const [isLoggingIn, setIsLoggingIn] = useState(false);
-
-  // Notifications
   const [notifications, setNotifications] = useState<Notification[]>([]);
 
   const addNotification = (type: 'success' | 'error' | 'info', message: string) => {
@@ -46,19 +38,23 @@ export default function App() {
   };
 
   const handleNavigate = (page: string) => {
-    // Protected Route Logic
-    const protectedRoutes = ['engineer_dashboard', 'profile'];
+    const protectedRoutes = ['engineer_dashboard', 'profile', 'create_project'];
     const adminRoutes = ['admin'];
     
     if (protectedRoutes.includes(page) && !user) {
-      addNotification('error', 'You must be logged in to access this page.');
+      addNotification('error', 'Login required.');
       setCurrentPage('login');
       return;
     }
 
     if (adminRoutes.includes(page) && user?.role !== 'ADMIN') {
-      addNotification('error', 'Unauthorized access.');
+      addNotification('error', 'Unauthorized.');
       return;
+    }
+
+    if (page === 'create_project' && user?.role !== 'CLIENT') {
+        addNotification('error', 'Only Clients can create projects.');
+        return;
     }
 
     setCurrentPage(page);
@@ -68,8 +64,6 @@ export default function App() {
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoggingIn(true);
-    
-    // Simulate API Delay
     setTimeout(() => {
       setIsLoggingIn(false);
       if (roleSelect === 'ENGINEER') {
@@ -83,25 +77,7 @@ export default function App() {
         handleNavigate('admin');
       }
       addNotification('success', `Welcome back, ${MOCK_USERS[roleSelect.toLowerCase() as keyof typeof MOCK_USERS].name}!`);
-    }, 800);
-  };
-
-  const handleSignupSuccess = (newUser: User) => {
-    setUser(newUser);
-    addNotification('success', 'Account created successfully!');
-    handleNavigate('engineer_dashboard');
-  };
-
-  const handleLogout = () => {
-    setUser(null);
-    handleNavigate('landing');
-    addNotification('info', 'You have been logged out.');
-  };
-
-  const handleUpdateUser = (updatedData: Partial<User>) => {
-    if (user) {
-      setUser({ ...user, ...updatedData });
-    }
+    }, 500);
   };
 
   const renderPage = () => {
@@ -112,15 +88,14 @@ export default function App() {
             <h2 className="text-2xl font-bold text-white mb-6 text-center">Nexus Portal Login</h2>
             <form onSubmit={handleLogin} className="space-y-4">
               <Input 
-                label="Email" 
-                placeholder="you@nexus.africa" 
+                placeholder="Email" 
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
               />
               <div className="space-y-1">
                 <label className="block text-sm font-medium text-slate-400">Select Role</label>
                 <select 
-                  className="w-full bg-slate-900 border border-slate-700 rounded-lg px-4 py-2 text-white focus:ring-2 focus:ring-nexus-500 outline-none"
+                  className="w-full bg-slate-900 border border-slate-700 rounded-lg px-4 py-2 text-white outline-none"
                   value={roleSelect}
                   onChange={(e) => setRoleSelect(e.target.value as UserRole)}
                 >
@@ -131,7 +106,7 @@ export default function App() {
               </div>
               <Button className="w-full" type="submit" isLoading={isLoggingIn}>Sign In</Button>
             </form>
-            <div className="mt-4 text-center">
+             <div className="mt-4 text-center">
               <span className="text-slate-500 text-sm">Don't have an account? </span>
               <button onClick={() => handleNavigate('signup')} className="text-nexus-400 text-sm hover:underline">
                 Join as Engineer
@@ -143,40 +118,23 @@ export default function App() {
     }
 
     switch (currentPage) {
-      case 'landing':
-        return <LandingPage onNavigate={handleNavigate} />;
-      case 'signup':
-        return <SignupPage onSignupSuccess={handleSignupSuccess} onNavigate={handleNavigate} />;
-      case 'engineer_dashboard':
-        return <EngineerDashboard onNotify={addNotification} />;
-      case 'industry':
-        return <IndustryPortal onNotify={addNotification} />;
-      case 'admin':
-        return <AdminDashboard />;
-      case 'profile':
-        return <ProfilePage user={user} onUpdateUser={handleUpdateUser} onNotify={addNotification} />;
-      default:
-        return <LandingPage onNavigate={handleNavigate} />;
+      case 'landing': return <LandingPage onNavigate={handleNavigate} />;
+      case 'signup': return <SignupPage onSignupSuccess={(u) => { setUser(u); handleNavigate('engineer_dashboard'); }} onNavigate={handleNavigate} />;
+      case 'engineer_dashboard': return <EngineerDashboard onNotify={addNotification} />;
+      case 'industry': return <IndustryPortal onNotify={addNotification} onNavigate={handleNavigate} />;
+      case 'admin': return <AdminDashboard />;
+      case 'profile': return <ProfilePage user={user} onUpdateUser={(d) => user && setUser({...user, ...d})} onNotify={addNotification} />;
+      case 'create_project': return <CreateProjectPage onNavigate={handleNavigate} onNotify={addNotification} />;
+      default: return <LandingPage onNavigate={handleNavigate} />;
     }
   };
 
   return (
-    <Layout 
-      user={user} 
-      onNavigate={handleNavigate} 
-      onLogout={handleLogout}
-      currentPage={currentPage}
-    >
+    <Layout user={user} onNavigate={handleNavigate} onLogout={() => { setUser(null); handleNavigate('landing'); }} currentPage={currentPage}>
       {renderPage()}
-      
       <div className="fixed bottom-4 right-4 z-50 flex flex-col gap-2">
         {notifications.map(n => (
-          <Toast 
-            key={n.id} 
-            type={n.type} 
-            message={n.message} 
-            onClose={() => removeNotification(n.id)} 
-          />
+          <Toast key={n.id} type={n.type} message={n.message} onClose={() => removeNotification(n.id)} />
         ))}
       </div>
     </Layout>

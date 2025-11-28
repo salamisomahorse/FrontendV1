@@ -13,6 +13,13 @@ export interface User {
   resume?: string; // filename or url
 }
 
+export interface ProjectRequirement {
+  id?: string;
+  skill: string;
+  minExperience: number; // Years
+  level: 'Junior' | 'Mid' | 'Senior' | 'Expert';
+}
+
 export interface Project {
   id: string;
   title: string;
@@ -20,10 +27,12 @@ export interface Project {
   status: 'Active' | 'Completed' | 'Pending';
   description: string;
   startDate: string;
+  requirements?: ProjectRequirement[];
 }
 
 export interface ProjectOutcome {
   projectId: string;
+  metricCategory: 'Performance' | 'Cost' | 'Revenue' | 'Security' | 'User Experience';
   metricLabel: string; // e.g., "Transaction Speed"
   metricValue: string; // e.g., "+40%"
   summary: string;
@@ -62,6 +71,7 @@ export interface Notification {
   message: string;
 }
 
+// Deprecated MVP types, kept to avoid breaking old imports if any exist
 export interface Course {
   id: string;
   title: string;
