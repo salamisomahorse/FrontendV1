@@ -9,8 +9,15 @@ interface CreateProjectPageProps {
   onNotify: (t: 'success' | 'error', m: string) => void;
 }
 
+type ValidationErrors = {
+  title?: string;
+  description?: string;
+  requirements?: string;
+}
+
 export const CreateProjectPage: React.FC<CreateProjectPageProps> = ({ onNavigate, onNotify }) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [errors, setErrors] = useState<ValidationErrors>({});
   
   const [projectData, setProjectData] = useState({
     title: '',
@@ -22,6 +29,22 @@ export const CreateProjectPage: React.FC<CreateProjectPageProps> = ({ onNavigate
   const [requirements, setRequirements] = useState<ProjectRequirement[]>([
     { skill: '', minExperience: 1, level: 'Junior' }
   ]);
+
+  const validateForm = (): boolean => {
+    const newErrors: ValidationErrors = {};
+    if (!projectData.title.trim()) {
+      newErrors.title = 'Project title is required.';
+    }
+    if (!projectData.description.trim()) {
+      newErrors.description = 'Project description is required.';
+    }
+    const validRequirements = requirements.filter(r => r.skill.trim() !== '');
+    if (validRequirements.length === 0) {
+      newErrors.requirements = 'At least one skill requirement must be added.';
+    }
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
 
   const handleAddRequirement = () => {
     setRequirements([...requirements, { skill: '', minExperience: 1, level: 'Junior' }]);
@@ -37,23 +60,25 @@ export const CreateProjectPage: React.FC<CreateProjectPageProps> = ({ onNavigate
 
   const handleRequirementChange = (index: number, field: keyof ProjectRequirement, value: any) => {
     const newReqs = [...requirements];
-    newReqs[index] = { ...newReqs[index], [field]: value };
+    // Validation for minExperience
+    if (field === 'minExperience') {
+        const numValue = parseInt(value, 10);
+        newReqs[index] = { ...newReqs[index], [field]: isNaN(numValue) || numValue < 0 ? 0 : numValue };
+    } else {
+        newReqs[index] = { ...newReqs[index], [field]: value };
+    }
     setRequirements(newReqs);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!projectData.title || !projectData.description) {
-      onNotify('error', 'Please fill in all project details.');
+    if (!validateForm()) {
+      onNotify('error', 'Please fix the errors before submitting.');
       return;
     }
 
     const validRequirements = requirements.filter(r => r.skill.trim() !== '');
-    if (validRequirements.length === 0) {
-      onNotify('error', 'Please add at least one skill requirement.');
-      return;
-    }
-
+    
     setIsSubmitting(true);
     try {
       await createProject(projectData, validRequirements);
@@ -84,15 +109,18 @@ export const CreateProjectPage: React.FC<CreateProjectPageProps> = ({ onNavigate
               placeholder="e.g. AI-Powered Credit Scoring Model" 
               value={projectData.title}
               onChange={(e) => setProjectData({...projectData, title: e.target.value})}
+              error={errors.title}
             />
             
             <div>
               <label className="block text-sm font-medium text-slate-400 mb-1">Project Brief / Description</label>
               <textarea 
-                className="w-full bg-slate-900 border border-slate-700 rounded-lg p-3 text-white text-sm focus:ring-2 focus:ring-nexus-500 outline-none min-h-[120px]"
+                className={`w-full bg-slate-900 border rounded-lg p-3 text-white text-sm focus:ring-2 focus:ring-nexus-500 outline-none min-h-[120px] ${errors.description ? 'border-red-500' : 'border-slate-700'}`}
+                placeholder="Describe the problem statement, goals, and scope..."
                 value={projectData.description}
                 onChange={(e) => setProjectData({...projectData, description: e.target.value})}
               />
+              {errors.description && <p className="mt-1 text-xs text-red-400">{errors.description}</p>}
             </div>
 
             <div className="grid md:grid-cols-2 gap-4">
@@ -102,7 +130,12 @@ export const CreateProjectPage: React.FC<CreateProjectPageProps> = ({ onNavigate
                 value={projectData.startDate}
                 onChange={(e) => setProjectData({...projectData, startDate: e.target.value})}
               />
-              <Input label="Client" value={projectData.clientName} disabled className="opacity-60"/>
+              <Input 
+                label="Client (Organization)" 
+                value={projectData.clientName} 
+                disabled 
+                className="opacity-60"
+              />
             </div>
           </div>
         </Card>
@@ -115,6 +148,8 @@ export const CreateProjectPage: React.FC<CreateProjectPageProps> = ({ onNavigate
              </Button>
           </div>
           
+          {errors.requirements && <p className="mb-2 text-xs text-red-400">{errors.requirements}</p>}
+
           <div className="space-y-3">
              {requirements.map((req, index) => (
                <div key={index} className="flex flex-col md:flex-row gap-3 items-end bg-slate-900/50 p-3 rounded-lg border border-slate-800">
@@ -132,7 +167,7 @@ export const CreateProjectPage: React.FC<CreateProjectPageProps> = ({ onNavigate
                       type="number" 
                       min="0"
                       value={req.minExperience}
-                      onChange={(e) => handleRequirementChange(index, 'minExperience', parseInt(e.target.value))}
+                      onChange={(e) => handleRequirementChange(index, 'minExperience', e.target.value)}
                     />
                   </div>
                   <div className="w-full md:w-40">
@@ -155,6 +190,7 @@ export const CreateProjectPage: React.FC<CreateProjectPageProps> = ({ onNavigate
                       className="px-3" 
                       onClick={() => handleRemoveRequirement(index)}
                       disabled={requirements.length === 1}
+                      title="Remove Requirement"
                     >
                       <Trash2 size={16}/>
                     </Button>

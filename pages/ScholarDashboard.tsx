@@ -4,6 +4,12 @@ import { CheckCircle, Clock, FileText, Send, AlertCircle } from 'lucide-react';
 import { Project, ProjectOutcome } from '../types';
 import { submitProjectOutcome, getEngineerProjects } from '../services/api';
 
+type OutcomeErrors = {
+  metricLabel?: string;
+  metricValue?: string;
+  summary?: string;
+}
+
 export const EngineerDashboard: React.FC<{ onNotify: (t: 'success'|'error', m: string) => void }> = ({ onNotify }) => {
   const [projects, setProjects] = useState<Project[]>([]);
   const [loading, setLoading] = useState(true);
@@ -16,7 +22,7 @@ export const EngineerDashboard: React.FC<{ onNotify: (t: 'success'|'error', m: s
     metricValue: '', 
     summary: '' 
   });
-  
+  const [outcomeErrors, setOutcomeErrors] = useState<OutcomeErrors>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
@@ -37,12 +43,33 @@ export const EngineerDashboard: React.FC<{ onNotify: (t: 'success'|'error', m: s
     setSelectedProject(project);
     setIsOutcomeModalOpen(true);
     setOutcomeData({ metricCategory: 'Performance', metricLabel: '', metricValue: '', summary: '' });
+    setOutcomeErrors({});
   };
 
+  const validateOutcome = (): boolean => {
+    const newErrors: OutcomeErrors = {};
+    if (!outcomeData.metricLabel?.trim()) {
+      newErrors.metricLabel = 'Metric label is required.';
+    }
+    if (!outcomeData.metricValue?.trim()) {
+      newErrors.metricValue = 'Value is required.';
+    } else {
+      // Validation for formats like: 45, -15.5, +20%, 1000
+      const metricRegex = /^[+-]?(\d*\.?\d+)\s*%?$/;
+      if (!metricRegex.test(outcomeData.metricValue)) {
+        newErrors.metricValue = 'Invalid format. Use numbers or percentages (e.g., -15.5%)';
+      }
+    }
+    if (!outcomeData.summary?.trim()) {
+      newErrors.summary = 'Summary is required.';
+    }
+    setOutcomeErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  }
+
   const handleSubmitOutcome = async () => {
-    if (!selectedProject) return;
-    if (!outcomeData.metricLabel || !outcomeData.metricValue || !outcomeData.summary) {
-      onNotify('error', 'Please fill in all outcome fields.');
+    if (!selectedProject || !validateOutcome()) {
+      onNotify('error', 'Please fix the errors in the form.');
       return;
     }
 
@@ -145,23 +172,26 @@ export const EngineerDashboard: React.FC<{ onNotify: (t: 'success'|'error', m: s
                  placeholder="e.g. API Latency"
                  value={outcomeData.metricLabel}
                  onChange={(e) => setOutcomeData({...outcomeData, metricLabel: e.target.value})}
+                 error={outcomeErrors.metricLabel}
                />
                <Input 
                  label="Value Achieved" 
-                 placeholder="e.g. -45ms"
+                 placeholder="e.g. -45ms or +20%"
                  value={outcomeData.metricValue}
                  onChange={(e) => setOutcomeData({...outcomeData, metricValue: e.target.value})}
+                 error={outcomeErrors.metricValue}
                />
             </div>
             <div>
                <label className="block text-sm font-medium text-slate-400 mb-1">Execution Summary</label>
                <textarea 
-                  className="w-full bg-slate-950 border border-slate-700 rounded-lg p-3 text-white text-sm focus:ring-2 focus:ring-nexus-500 outline-none"
+                  className={`w-full bg-slate-950 border rounded-lg p-3 text-white text-sm focus:ring-2 focus:ring-nexus-500 outline-none ${outcomeErrors.summary ? 'border-red-500' : 'border-slate-700'}`}
                   rows={4}
                   placeholder="Briefly describe the implementation details..."
                   value={outcomeData.summary}
                   onChange={(e) => setOutcomeData({...outcomeData, summary: e.target.value})}
                />
+               {outcomeErrors.summary && <p className="mt-1 text-xs text-red-400">{outcomeErrors.summary}</p>}
             </div>
             <div className="flex justify-end pt-2">
                <Button onClick={handleSubmitOutcome} isLoading={isSubmitting}>
