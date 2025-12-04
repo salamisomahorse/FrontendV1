@@ -20,17 +20,17 @@ export const Breadcrumbs: React.FC<BreadcrumbsProps> = ({ currentPage, onNavigat
   const label = BREADCRUMB_LABELS[currentPage] ?? 'Page';
 
   return (
-    <div className="bg-slate-900 border-b border-slate-800">
+    <div className="bg-slate-50 dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 transition-colors duration-200">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3">
-        <div className="flex items-center text-sm text-slate-500">
+        <div className="flex items-center text-sm text-slate-600 dark:text-slate-500">
           <span
-            className="cursor-pointer hover:text-slate-300"
+            className="cursor-pointer hover:text-slate-900 dark:hover:text-slate-300 transition-colors"
             onClick={() => onNavigate('landing')}
           >
             Nexus
           </span>
           <ChevronRight size={14} className="mx-2" />
-          <span className="text-nexus-500 font-medium">{label}</span>
+          <span className="text-nexus-500 dark:text-nexus-400 font-medium">{label}</span>
         </div>
       </div>
     </div>

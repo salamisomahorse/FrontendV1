@@ -91,7 +91,7 @@ export default function App() {
       return (
         <div className="flex justify-center items-center py-20 animate-fade-in">
           <Card className="w-full max-w-md p-8">
-            <h2 className="text-2xl font-bold text-white mb-6 text-center">Nexus Portal Login</h2>
+            <h2 className="text-2xl font-bold text-slate-900 dark:text-white mb-6 text-center">Nexus Portal Login</h2>
             <form onSubmit={handleLogin} className="space-y-4">
               <Input 
                 placeholder="Email" 
@@ -99,9 +99,9 @@ export default function App() {
                 onChange={(e) => setEmail(e.target.value)}
               />
               <div className="space-y-1">
-                <label className="block text-sm font-medium text-slate-400">Select Role</label>
+                <label className="block text-sm font-medium text-slate-600 dark:text-slate-400">Select Role</label>
                 <select 
-                  className="w-full bg-slate-900 border border-slate-700 rounded-lg px-4 py-2 text-white outline-none"
+                  className="w-full bg-white border border-slate-300 rounded-lg px-4 py-2 text-slate-900 outline-none dark:bg-slate-900 dark:border-slate-700 dark:text-white transition-colors"
                   value={roleSelect}
                   onChange={(e) => setRoleSelect(e.target.value as UserRole)}
                 >
@@ -113,8 +113,8 @@ export default function App() {
               <Button className="w-full" type="submit" isLoading={isLoggingIn}>Sign In</Button>
             </form>
              <div className="mt-4 text-center">
-              <span className="text-slate-500 text-sm">Don't have an account? </span>
-              <button onClick={() => handleNavigate('signup')} className="text-nexus-400 text-sm hover:underline">
+              <span className="text-slate-600 dark:text-slate-500 text-sm">Don't have an account? </span>
+              <button onClick={() => handleNavigate('signup')} className="text-nexus-500 dark:text-nexus-400 text-sm hover:underline">
                 Join as Engineer
               </button>
             </div>
