@@ -1,4 +1,5 @@
 
+
 import React from 'react';
 import { Button, Card, Badge } from '../components/UI';
 import { ArrowRight, Cpu, Leaf, GraduationCap, HeartPulse, ShieldCheck, CheckCircle } from 'lucide-react';
@@ -16,11 +17,11 @@ export const LandingPage: React.FC<{ onNavigate: (p: string) => void }> = ({ onN
           </span>
         </h1>
         <p className="max-w-2xl mx-auto text-lg text-slate-400">
-          Somahorse Nexus connects African industries (Fintech, AgriTech, HealthTech) with vetted AI Engineering talent.
+          Somahorse Nexus connects African industries (Fintech, AgriTech, HealthTech) with vetted AI Talent.
           We provide the infrastructure for secure talent onboarding and project outcome tracking.
         </p>
         <div className="flex flex-col sm:flex-row justify-center gap-4">
-          <Button size="lg" onClick={() => onNavigate('signup')}>Join as Engineer</Button>
+          <Button size="lg" onClick={() => onNavigate('signup')}>Join as Talent</Button>
           <Button size="lg" variant="outline" onClick={() => onNavigate('industry')}>
             <ShieldCheck className="w-4 h-4 mr-2" />
             Find Talent
@@ -43,7 +44,7 @@ export const LandingPage: React.FC<{ onNavigate: (p: string) => void }> = ({ onN
                 <p className="text-slate-300 text-lg leading-relaxed">
                   To leaders in <strong>Fintech, AgriTech, HealthTech, and EdTech</strong>: 
                   The gap between complex industrial problems and technical execution ends here. 
-                  Somahorse Nexus is your pipeline to top-tier AI Engineers capable of deploying 
+                  Somahorse Nexus is your pipeline to top-tier AI Talent capable of deploying 
                   robust, scalable solutions tailored to the African context.
                 </p>
               </div>
@@ -65,7 +66,7 @@ export const LandingPage: React.FC<{ onNavigate: (p: string) => void }> = ({ onN
               
               <div className="pt-2">
                 <Button size="lg" variant="primary" onClick={() => onNavigate('industry')}>
-                  Explore Engineering Talent
+                  Explore Talent
                   <ArrowRight className="ml-2 w-5 h-5" />
                 </Button>
               </div>
@@ -100,7 +101,7 @@ export const LandingPage: React.FC<{ onNavigate: (p: string) => void }> = ({ onN
       {/* Sectors / Features List (Simplified) */}
       <section className="grid md:grid-cols-4 gap-6">
         {[
-          { title: 'Vetted Talent', icon: ShieldCheck, desc: 'Top 1% of engineers passed rigorous technical assessments.' },
+          { title: 'Vetted Talent', icon: ShieldCheck, desc: 'Top 1% of talent passed rigorous technical assessments.' },
           { title: 'Rapid Deployment', icon: Cpu, desc: 'From problem statement to MVP in record time.' },
           { title: 'Data Integrity', icon: ShieldCheck, desc: 'Enterprise-grade security and audit trails.' },
           { title: 'Scalable Teams', icon: GraduationCap, desc: 'Expand your engineering capacity on demand.' },
@@ -117,7 +118,7 @@ export const LandingPage: React.FC<{ onNavigate: (p: string) => void }> = ({ onN
 
       <section className="text-center py-12">
         <h2 className="text-2xl font-bold text-white mb-4">Ready to Architect the Future?</h2>
-        <Button size="lg" onClick={() => onNavigate('signup')}>Create Engineer Account</Button>
+        <Button size="lg" onClick={() => onNavigate('signup')}>Create Talent Account</Button>
       </section>
     </div>
   );

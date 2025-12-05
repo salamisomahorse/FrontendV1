@@ -1,4 +1,5 @@
 
+
 import React, { useState } from 'react';
 import { User } from '../types';
 import { Button } from './UI';
@@ -19,9 +20,9 @@ export const Layout: React.FC<LayoutProps> = ({ children, user, onNavigate, onLo
     if (!user) return [{ id: 'landing', label: 'Home', icon: Globe }];
     
     switch (user.role) {
-      case 'ENGINEER':
+      case 'TALENT':
         return [
-          { id: 'engineer_dashboard', label: 'Workspace', icon: LayoutDashboard },
+          { id: 'talent_dashboard', label: 'Workspace', icon: LayoutDashboard },
           { id: 'profile', label: 'My Profile', icon: UserIcon },
         ];
       case 'CLIENT':
@@ -30,6 +31,7 @@ export const Layout: React.FC<LayoutProps> = ({ children, user, onNavigate, onLo
           { id: 'profile', label: 'Company Profile', icon: UserIcon },
         ];
       case 'ADMIN':
+      case 'INTERNAL_STAFF':
         return [
           { id: 'admin', label: 'Admin Panel', icon: LayoutDashboard },
         ];
@@ -44,7 +46,7 @@ export const Layout: React.FC<LayoutProps> = ({ children, user, onNavigate, onLo
     const map: Record<string, string> = {
       'landing': 'Home',
       'signup': 'Talent Registration',
-      'engineer_dashboard': 'Engineer Workspace',
+      'talent_dashboard': 'Talent Workspace',
       'industry': 'Industry Portal',
       'admin': 'Admin Dashboard',
       'profile': 'Profile',
@@ -95,7 +97,7 @@ export const Layout: React.FC<LayoutProps> = ({ children, user, onNavigate, onLo
                 <div className="flex items-center gap-4">
                   <div className="text-right">
                     <p className="text-sm font-medium text-white">{user.name}</p>
-                    <p className="text-xs text-slate-500 uppercase">{user.role}</p>
+                    <p className="text-xs text-slate-500 uppercase">{user.role.replace('_', ' ')}</p>
                   </div>
                   <Button variant="ghost" size="sm" onClick={onLogout} title="Sign Out">
                     <LogOut size={18} />
@@ -104,7 +106,7 @@ export const Layout: React.FC<LayoutProps> = ({ children, user, onNavigate, onLo
               ) : (
                 <div className="flex gap-2">
                   <Button variant="ghost" size="sm" onClick={() => onNavigate('login')}>Login</Button>
-                  <Button variant="primary" size="sm" onClick={() => onNavigate('signup')}>Join as Engineer</Button>
+                  <Button variant="primary" size="sm" onClick={() => onNavigate('signup')}>Join as Talent</Button>
                 </div>
               )}
             </div>

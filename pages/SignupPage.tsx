@@ -10,6 +10,8 @@ interface SignupPageProps {
   onNavigate: (page: string) => void;
 }
 
+const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
 export const SignupPage: React.FC<SignupPageProps> = ({ onSignupSuccess, onNavigate }) => {
   const [formData, setFormData] = useState({
     name: '',
@@ -18,20 +20,40 @@ export const SignupPage: React.FC<SignupPageProps> = ({ onSignupSuccess, onNavig
     bio: '',
     resume: ''
   });
+  const [errors, setErrors] = useState({ email: '', name: '' });
   const [skills, setSkills] = useState<string[]>([]);
   const [currentSkill, setCurrentSkill] = useState('');
   const [isLoading, setIsLoading] = useState(false);
 
+  const validate = () => {
+    const newErrors = { email: '', name: '' };
+    if (!formData.name.trim()) {
+        newErrors.name = 'Full name is required.';
+    }
+    if (!formData.email.trim()) {
+        newErrors.email = 'Email is required.';
+    } else if (!EMAIL_REGEX.test(formData.email.trim().toLowerCase())) {
+        newErrors.email = 'Please enter a valid email address.';
+    }
+    setErrors(newErrors);
+    return !newErrors.name && !newErrors.email;
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!validate()) {
+        return;
+    }
     setIsLoading(true);
     
     try {
-      // Calls the mock API which simulates POST /v1/talent/signup
-      const newUser = await registerTalent({
-        ...formData,
-        skills
-      });
+      const finalData = {
+          ...formData,
+          name: formData.name.trim(),
+          email: formData.email.trim().toLowerCase(),
+          skills: skills.map(s => s.trim())
+      };
+      const newUser = await registerTalent(finalData);
       onSignupSuccess(newUser);
     } catch (error) {
       console.error("Signup failed", error);
@@ -41,8 +63,9 @@ export const SignupPage: React.FC<SignupPageProps> = ({ onSignupSuccess, onNavig
   };
 
   const addSkill = () => {
-    if (currentSkill && !skills.includes(currentSkill)) {
-      setSkills([...skills, currentSkill]);
+    const trimmedSkill = currentSkill.trim();
+    if (trimmedSkill && !skills.find(s => s.toLowerCase() === trimmedSkill.toLowerCase())) {
+      setSkills([...skills, trimmedSkill]);
       setCurrentSkill('');
     }
   };
@@ -55,7 +78,7 @@ export const SignupPage: React.FC<SignupPageProps> = ({ onSignupSuccess, onNavig
 
       <Card className="p-8">
         <div className="mb-8 border-b border-slate-700 pb-4">
-          <h1 className="text-2xl font-bold text-white">Join as an AI Engineer</h1>
+          <h1 className="text-2xl font-bold text-white">Join as an AI Talent</h1>
           <p className="text-slate-400 mt-1">
             Complete your profile to be matched with top African Fintech and AgriTech projects.
           </p>
@@ -69,14 +92,16 @@ export const SignupPage: React.FC<SignupPageProps> = ({ onSignupSuccess, onNavig
               required
               value={formData.name}
               onChange={(e) => setFormData({...formData, name: e.target.value})}
+              error={errors.name}
             />
             <Input 
               label="Email Address" 
               type="email" 
-              placeholder="engineer@example.com" 
+              placeholder="talent@example.com" 
               required
               value={formData.email}
               onChange={(e) => setFormData({...formData, email: e.target.value})}
+              error={errors.email}
             />
           </div>
 

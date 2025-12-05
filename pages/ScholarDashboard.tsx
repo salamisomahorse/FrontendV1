@@ -1,29 +1,34 @@
+
 import React, { useState, useEffect } from 'react';
 import { Card, Button, Badge, Modal, Input, Skeleton, Select } from '../components/UI';
-import { CheckCircle, Clock, FileText, Send, AlertCircle } from 'lucide-react';
+import { Clock, FileText, Send, AlertCircle } from 'lucide-react';
 import { Project, ProjectOutcome } from '../types';
 import { submitProjectOutcome, getEngineerProjects } from '../services/api';
 
-type OutcomeErrors = {
-  metricLabel?: string;
-  metricValue?: string;
-  summary?: string;
-}
+type OutcomeErrors = { [key: string]: string };
 
-export const EngineerDashboard: React.FC<{ onNotify: (t: 'success'|'error', m: string) => void }> = ({ onNotify }) => {
+const initialOutcomeState: Partial<ProjectOutcome> = {
+  summary: '',
+  delivery_speed_days: undefined,
+  prediction_accuracy: undefined,
+  client_satisfaction_rating: undefined,
+  code_quality_score: undefined,
+  forecast_accuracy_percentage: undefined,
+  user_engagement_rate: undefined,
+  retention_rate: undefined,
+  requirements_completion_rate: undefined,
+};
+
+export const TalentDashboard: React.FC<{ onNotify: (t: 'success'|'error', m: string) => void }> = ({ onNotify }) => {
   const [projects, setProjects] = useState<Project[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedProject, setSelectedProject] = useState<Project | null>(null);
   const [isOutcomeModalOpen, setIsOutcomeModalOpen] = useState(false);
   
-  const [outcomeData, setOutcomeData] = useState<Partial<ProjectOutcome>>({ 
-    metricCategory: 'Performance',
-    metricLabel: '', 
-    metricValue: '', 
-    summary: '' 
-  });
+  const [outcomeData, setOutcomeData] = useState<Partial<ProjectOutcome>>(initialOutcomeState);
   const [outcomeErrors, setOutcomeErrors] = useState<OutcomeErrors>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [metricCategory, setMetricCategory] = useState('Performance');
 
   useEffect(() => {
     const fetchData = async () => {
@@ -42,27 +47,32 @@ export const EngineerDashboard: React.FC<{ onNotify: (t: 'success'|'error', m: s
   const handleOpenOutcome = (project: Project) => {
     setSelectedProject(project);
     setIsOutcomeModalOpen(true);
-    setOutcomeData({ metricCategory: 'Performance', metricLabel: '', metricValue: '', summary: '' });
+    setOutcomeData(initialOutcomeState);
     setOutcomeErrors({});
+    setMetricCategory('Performance');
+  };
+  
+  const handleOutcomeChange = (field: keyof ProjectOutcome, value: string) => {
+    setOutcomeData(prev => ({ ...prev, [field]: value === '' ? undefined : Number(value) }));
   };
 
   const validateOutcome = (): boolean => {
     const newErrors: OutcomeErrors = {};
-    if (!outcomeData.metricLabel?.trim()) {
-      newErrors.metricLabel = 'Metric label is required.';
-    }
-    if (!outcomeData.metricValue?.trim()) {
-      newErrors.metricValue = 'Value is required.';
-    } else {
-      // Validation for formats like: 45, -15.5, +20%, 1000
-      const metricRegex = /^[+-]?(\d*\.?\d+)\s*%?$/;
-      if (!metricRegex.test(outcomeData.metricValue)) {
-        newErrors.metricValue = 'Invalid format. Use numbers or percentages (e.g., -15.5%)';
-      }
-    }
-    if (!outcomeData.summary?.trim()) {
-      newErrors.summary = 'Summary is required.';
-    }
+    if (!outcomeData.summary?.trim()) newErrors.summary = 'Summary is required.';
+
+    // Validate only visible fields
+    const visibleFields = getFieldsForCategory(metricCategory);
+    visibleFields.forEach(field => {
+        const value = outcomeData[field.id as keyof ProjectOutcome] as number | undefined;
+        if (value === undefined || value === null || isNaN(value)) {
+            newErrors[field.id] = `${field.label} is required.`;
+            return;
+        }
+        if (field.min !== undefined && value < field.min) newErrors[field.id] = `Must be at least ${field.min}.`;
+        if (field.max !== undefined && value > field.max) newErrors[field.id] = `Must be no more than ${field.max}.`;
+        if (field.integer && !Number.isInteger(value)) newErrors[field.id] = `Must be a whole number.`;
+    });
+    
     setOutcomeErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   }
@@ -74,16 +84,15 @@ export const EngineerDashboard: React.FC<{ onNotify: (t: 'success'|'error', m: s
     }
 
     setIsSubmitting(true);
-    
     try {
-      await submitProjectOutcome({
+      const submissionData: ProjectOutcome = {
         projectId: selectedProject.id,
-        metricCategory: outcomeData.metricCategory as any,
-        metricLabel: outcomeData.metricLabel!,
-        metricValue: outcomeData.metricValue!,
-        summary: outcomeData.summary!,
-        submittedAt: new Date().toISOString()
-      });
+        summary: outcomeData.summary!.trim(),
+        submittedAt: new Date().toISOString(),
+        ...outcomeData
+      };
+      
+      await submitProjectOutcome(submissionData);
       onNotify('success', 'Project outcome submitted successfully.');
       setIsOutcomeModalOpen(false);
     } catch (e) {
@@ -93,11 +102,34 @@ export const EngineerDashboard: React.FC<{ onNotify: (t: 'success'|'error', m: s
     }
   };
 
+  const getFieldsForCategory = (category: string) => {
+    switch(category) {
+        case 'Performance':
+            return [
+                { id: 'delivery_speed_days', label: 'Delivery Speed (Days)', type: 'number', min: 1, integer: true, placeholder: 'e.g. 30' },
+                { id: 'prediction_accuracy', label: 'Prediction Accuracy (%)', type: 'number', min: 0, max: 100, placeholder: 'e.g. 92.5' }
+            ];
+        case 'Quality':
+            return [
+                { id: 'client_satisfaction_rating', label: 'Client Satisfaction (1-5)', type: 'number', min: 1, max: 5, integer: true, placeholder: 'e.g. 5' },
+                { id: 'code_quality_score', label: 'Code Quality (1-5)', type: 'number', min: 1, max: 5, integer: true, placeholder: 'e.g. 4' }
+            ];
+        case 'Business':
+            return [
+                { id: 'forecast_accuracy_percentage', label: 'Forecast Accuracy (%)', type: 'number', min: 0, max: 100, placeholder: 'e.g. 85.2' },
+                { id: 'user_engagement_rate', label: 'User Engagement Rate (0-1)', type: 'number', min: 0, max: 1, placeholder: 'e.g. 0.75' },
+            ];
+        default: return [];
+    }
+  };
+
+  const metricFields = getFieldsForCategory(metricCategory);
+
   return (
     <div className="space-y-8 animate-fade-in">
       <div className="flex justify-between items-end">
         <div>
-           <h1 className="text-3xl font-bold text-white">Engineer Workspace</h1>
+           <h1 className="text-3xl font-bold text-white">Talent Workspace</h1>
            <p className="text-slate-400 mt-2">Manage your active contracts and report success metrics.</p>
         </div>
         <Badge color="green">Status: Active</Badge>
@@ -149,38 +181,32 @@ export const EngineerDashboard: React.FC<{ onNotify: (t: 'success'|'error', m: s
         title={`Report Outcome: ${selectedProject?.title}`}
       >
          <div className="space-y-4">
-            <p className="text-sm text-slate-400">
-              Submit your project deliverables and structured success metrics.
-            </p>
-            
             <Select 
               label="Metric Category"
               options={[
-                { value: 'Performance', label: 'Performance (Latency, Speed)' },
-                { value: 'Cost', label: 'Cost Reduction' },
-                { value: 'Revenue', label: 'Revenue Generation' },
-                { value: 'Security', label: 'Security / Compliance' },
-                { value: 'User Experience', label: 'UX / Engagement' },
+                { value: 'Performance', label: 'Performance Metrics' },
+                { value: 'Quality', label: 'Quality & Satisfaction' },
+                { value: 'Business', label: 'Business Impact' },
               ]}
-              value={outcomeData.metricCategory}
-              onChange={(e) => setOutcomeData({...outcomeData, metricCategory: e.target.value as any})}
+              value={metricCategory}
+              onChange={(e) => setMetricCategory(e.target.value)}
             />
 
-            <div className="grid grid-cols-2 gap-4">
-               <Input 
-                 label="Metric Label" 
-                 placeholder="e.g. API Latency"
-                 value={outcomeData.metricLabel}
-                 onChange={(e) => setOutcomeData({...outcomeData, metricLabel: e.target.value})}
-                 error={outcomeErrors.metricLabel}
-               />
-               <Input 
-                 label="Value Achieved" 
-                 placeholder="e.g. -45ms or +20%"
-                 value={outcomeData.metricValue}
-                 onChange={(e) => setOutcomeData({...outcomeData, metricValue: e.target.value})}
-                 error={outcomeErrors.metricValue}
-               />
+            <div className="grid grid-cols-2 gap-4 pt-2">
+                {metricFields.map(field => (
+                    <Input
+                        key={field.id}
+                        label={field.label}
+                        type={field.type}
+                        placeholder={field.placeholder}
+                        value={outcomeData[field.id as keyof ProjectOutcome] || ''}
+                        onChange={(e) => handleOutcomeChange(field.id as keyof ProjectOutcome, e.target.value)}
+                        error={outcomeErrors[field.id]}
+                        min={field.min}
+                        max={field.max}
+                        step={field.integer ? 1 : 'any'}
+                    />
+                ))}
             </div>
             <div>
                <label className="block text-sm font-medium text-slate-400 mb-1">Execution Summary</label>

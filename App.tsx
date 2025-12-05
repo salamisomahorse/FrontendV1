@@ -3,7 +3,7 @@ import React, { useState } from 'react';
 import { Layout } from './components/Layout';
 import { LandingPage } from './pages/LandingPage';
 import { SignupPage } from './pages/SignupPage';
-import { EngineerDashboard } from './pages/ScholarDashboard'; 
+import { TalentDashboard } from './pages/ScholarDashboard'; 
 import { IndustryPortal } from './pages/IndustryPortal';
 import { AdminDashboard } from './pages/AdminDashboard';
 import { ProfilePage } from './pages/ProfilePage';
@@ -12,21 +12,27 @@ import { User, UserRole, Notification } from './types';
 import { Card, Button, Input, Toast } from './components/UI';
 
 const MOCK_USERS: Record<string, User> = {
-  engineer: { 
-    id: '1', name: 'John Doe', email: 'john@nexus.africa', role: 'ENGINEER',
-    skills: ['Python', 'FastAPI'], resume: 'john_cv.pdf'
+  talent: { 
+    id: '1', name: 'John Doe', email: 'john@nexus.africa', role: 'TALENT',
+    skills: ['Python', 'FastAPI'], resume: 'john_cv.pdf', phone: '+254712345678'
   },
   client: { id: '2', name: 'Tech Corp', email: 'cto@techcorp.com', role: 'CLIENT' },
-  admin: { id: '3', name: 'Admin', email: 'admin@nexus.africa', role: 'ADMIN' },
+  admin: { id: '3', name: 'Admin User', email: 'admin@nexus.africa', role: 'ADMIN' },
+  internal_staff: { id: '4', name: 'Staff Member', email: 'staff@nexus.africa', role: 'INTERNAL_STAFF' },
 };
 
 export default function App() {
   const [currentPage, setCurrentPage] = useState('landing');
   const [user, setUser] = useState<User | null>(null);
-  const [roleSelect, setRoleSelect] = useState<UserRole>('ENGINEER');
+  const [roleSelect, setRoleSelect] = useState<UserRole>('TALENT');
   const [email, setEmail] = useState('');
   const [isLoggingIn, setIsLoggingIn] = useState(false);
   const [notifications, setNotifications] = useState<Notification[]>([]);
+  
+  const [mfaStep, setMfaStep] = useState(false);
+  const [mfaCode, setMfaCode] = useState('');
+  const [userForMfa, setUserForMfa] = useState<User | null>(null);
+
 
   const addNotification = (type: 'success' | 'error' | 'info', message: string) => {
     const id = Math.random().toString(36).substr(2, 9);
@@ -38,23 +44,32 @@ export default function App() {
   };
 
   const handleNavigate = (page: string) => {
-    const protectedRoutes = ['engineer_dashboard', 'profile', 'create_project'];
-    const adminRoutes = ['admin'];
-    
-    if (protectedRoutes.includes(page) && !user) {
-      addNotification('error', 'Login required.');
-      setCurrentPage('login');
-      return;
-    }
+    if (!user) {
+       const publicRoutes = ['landing', 'signup', 'login'];
+       if (!publicRoutes.includes(page)) {
+          addNotification('error', 'Login required.');
+          setCurrentPage('login');
+          return;
+       }
+    } else {
+        // Enforce RBAC
+        const role = user.role;
+        const talentPages = ['talent_dashboard', 'profile'];
+        const clientPages = ['industry', 'profile', 'create_project'];
+        const adminPages = ['admin', 'industry']; // Admins can see industry portal
 
-    if (adminRoutes.includes(page) && user?.role !== 'ADMIN') {
-      addNotification('error', 'Unauthorized.');
-      return;
-    }
-
-    if (page === 'create_project' && user?.role !== 'CLIENT') {
-        addNotification('error', 'Only Clients can create projects.');
-        return;
+        if (role === 'TALENT' && !talentPages.includes(page)) {
+            addNotification('error', 'Forbidden: Access denied.');
+            return;
+        }
+        if (role === 'CLIENT' && !clientPages.includes(page)) {
+            addNotification('error', 'Forbidden: Access denied.');
+            return;
+        }
+        if ((role === 'ADMIN' || role === 'INTERNAL_STAFF') && !adminPages.includes(page)) {
+            addNotification('error', 'Forbidden: Access denied.');
+            return;
+        }
     }
 
     setCurrentPage(page);
@@ -64,54 +79,96 @@ export default function App() {
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoggingIn(true);
+    
     setTimeout(() => {
       setIsLoggingIn(false);
-      if (roleSelect === 'ENGINEER') {
-        setUser(MOCK_USERS.engineer);
-        handleNavigate('engineer_dashboard');
-      } else if (roleSelect === 'CLIENT') {
-        setUser(MOCK_USERS.client);
-        handleNavigate('industry');
-      } else if (roleSelect === 'ADMIN') {
-        setUser(MOCK_USERS.admin);
-        handleNavigate('admin');
+      const selectedUser = MOCK_USERS[roleSelect.toLowerCase().replace('_', '') as keyof typeof MOCK_USERS];
+
+      if (roleSelect === 'ADMIN' || roleSelect === 'INTERNAL_STAFF') {
+        setUserForMfa(selectedUser);
+        setMfaStep(true);
+      } else {
+        setUser(selectedUser);
+        const landingPage = roleSelect === 'TALENT' ? 'talent_dashboard' : 'industry';
+        handleNavigate(landingPage);
+        addNotification('success', `Welcome back, ${selectedUser.name}!`);
       }
-      addNotification('success', `Welcome back, ${MOCK_USERS[roleSelect.toLowerCase() as keyof typeof MOCK_USERS].name}!`);
     }, 500);
   };
+  
+  const handleMfaSubmit = (e: React.FormEvent) => {
+      e.preventDefault();
+      setIsLoggingIn(true);
+      setTimeout(() => {
+          setIsLoggingIn(false);
+          // Mocking MFA code validation
+          if (mfaCode === '123456' && userForMfa) {
+              setUser(userForMfa);
+              handleNavigate('admin');
+              addNotification('success', `Welcome back, ${userForMfa.name}!`);
+              setMfaStep(false);
+              setUserForMfa(null);
+          } else {
+              addNotification('error', 'Invalid MFA code.');
+          }
+          setMfaCode('');
+      }, 500);
+  }
 
   const renderPage = () => {
     if (currentPage === 'login') {
       return (
         <div className="flex justify-center items-center py-20 animate-fade-in">
           <Card className="w-full max-w-md p-8">
-            <h2 className="text-2xl font-bold text-white mb-6 text-center">Nexus Portal Login</h2>
-            <form onSubmit={handleLogin} className="space-y-4">
-              <Input 
-                placeholder="Email" 
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-              />
-              <div className="space-y-1">
-                <label className="block text-sm font-medium text-slate-400">Select Role</label>
-                <select 
-                  className="w-full bg-slate-900 border border-slate-700 rounded-lg px-4 py-2 text-white outline-none"
-                  value={roleSelect}
-                  onChange={(e) => setRoleSelect(e.target.value as UserRole)}
-                >
-                  <option value="ENGINEER">AI Engineer</option>
-                  <option value="CLIENT">Industry Partner</option>
-                  <option value="ADMIN">Admin</option>
-                </select>
-              </div>
-              <Button className="w-full" type="submit" isLoading={isLoggingIn}>Sign In</Button>
-            </form>
-             <div className="mt-4 text-center">
-              <span className="text-slate-500 text-sm">Don't have an account? </span>
-              <button onClick={() => handleNavigate('signup')} className="text-nexus-400 text-sm hover:underline">
-                Join as Engineer
-              </button>
-            </div>
+            {mfaStep ? (
+              <>
+                <h2 className="text-2xl font-bold text-white mb-2 text-center">Two-Factor Authentication</h2>
+                <p className="text-center text-slate-400 text-sm mb-6">Enter the code from your authenticator app.</p>
+                <form onSubmit={handleMfaSubmit} className="space-y-4">
+                  <Input 
+                    placeholder="6-digit code" 
+                    type="text"
+                    value={mfaCode}
+                    onChange={(e) => setMfaCode(e.target.value)}
+                    maxLength={6}
+                  />
+                  <Button className="w-full" type="submit" isLoading={isLoggingIn}>Verify</Button>
+                  <Button className="w-full" variant="ghost" onClick={() => setMfaStep(false)}>Back to Login</Button>
+                </form>
+              </>
+            ) : (
+              <>
+                <h2 className="text-2xl font-bold text-white mb-6 text-center">Nexus Portal Login</h2>
+                <form onSubmit={handleLogin} className="space-y-4">
+                  <Input 
+                    placeholder="Email" 
+                    type="email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                  />
+                  <div className="space-y-1">
+                    <label className="block text-sm font-medium text-slate-400">Select Role</label>
+                    <select 
+                      className="w-full bg-slate-900 border border-slate-700 rounded-lg px-4 py-2 text-white outline-none"
+                      value={roleSelect}
+                      onChange={(e) => setRoleSelect(e.target.value as UserRole)}
+                    >
+                      <option value="TALENT">AI Talent</option>
+                      <option value="CLIENT">Industry Partner</option>
+                      <option value="ADMIN">Admin</option>
+                      <option value="INTERNAL_STAFF">Internal Staff</option>
+                    </select>
+                  </div>
+                  <Button className="w-full" type="submit" isLoading={isLoggingIn}>Sign In</Button>
+                </form>
+                 <div className="mt-4 text-center">
+                  <span className="text-slate-500 text-sm">Don't have an account? </span>
+                  <button onClick={() => handleNavigate('signup')} className="text-nexus-400 text-sm hover:underline">
+                    Join as Talent
+                  </button>
+                </div>
+              </>
+            )}
           </Card>
         </div>
       );
@@ -119,8 +176,8 @@ export default function App() {
 
     switch (currentPage) {
       case 'landing': return <LandingPage onNavigate={handleNavigate} />;
-      case 'signup': return <SignupPage onSignupSuccess={(u) => { setUser(u); handleNavigate('engineer_dashboard'); }} onNavigate={handleNavigate} />;
-      case 'engineer_dashboard': return <EngineerDashboard onNotify={addNotification} />;
+      case 'signup': return <SignupPage onSignupSuccess={(u) => { setUser(u); handleNavigate('talent_dashboard'); }} onNavigate={handleNavigate} />;
+      case 'talent_dashboard': return <TalentDashboard onNotify={addNotification} />;
       case 'industry': return <IndustryPortal onNotify={addNotification} onNavigate={handleNavigate} />;
       case 'admin': return <AdminDashboard />;
       case 'profile': return <ProfilePage user={user} onUpdateUser={(d) => user && setUser({...user, ...d})} onNotify={addNotification} />;

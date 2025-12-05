@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { Button, Card, Input, Select } from '../components/UI';
 import { ArrowLeft, Plus, Trash2, Save } from 'lucide-react';
@@ -32,9 +33,14 @@ export const CreateProjectPage: React.FC<CreateProjectPageProps> = ({ onNavigate
 
   const validateForm = (): boolean => {
     const newErrors: ValidationErrors = {};
-    if (!projectData.title.trim()) {
+    const trimmedTitle = projectData.title.trim();
+    
+    if (!trimmedTitle) {
       newErrors.title = 'Project title is required.';
+    } else if (trimmedTitle.length < 3 || trimmedTitle.length > 200) {
+      newErrors.title = 'Title must be between 3 and 200 characters.';
     }
+
     if (!projectData.description.trim()) {
       newErrors.description = 'Project description is required.';
     }
@@ -60,7 +66,6 @@ export const CreateProjectPage: React.FC<CreateProjectPageProps> = ({ onNavigate
 
   const handleRequirementChange = (index: number, field: keyof ProjectRequirement, value: any) => {
     const newReqs = [...requirements];
-    // Validation for minExperience
     if (field === 'minExperience') {
         const numValue = parseInt(value, 10);
         newReqs[index] = { ...newReqs[index], [field]: isNaN(numValue) || numValue < 0 ? 0 : numValue };
@@ -81,7 +86,12 @@ export const CreateProjectPage: React.FC<CreateProjectPageProps> = ({ onNavigate
     
     setIsSubmitting(true);
     try {
-      await createProject(projectData, validRequirements);
+      const finalProjectData = {
+        ...projectData,
+        title: projectData.title.trim(),
+        description: projectData.description.trim(),
+      };
+      await createProject(finalProjectData, validRequirements);
       onNotify('success', 'Project created successfully!');
       onNavigate('industry');
     } catch (err) {
@@ -110,10 +120,11 @@ export const CreateProjectPage: React.FC<CreateProjectPageProps> = ({ onNavigate
               value={projectData.title}
               onChange={(e) => setProjectData({...projectData, title: e.target.value})}
               error={errors.title}
+              maxLength={200}
             />
             
             <div>
-              <label className="block text-sm font-medium text-slate-400 mb-1">Project Brief / Description</label>
+              <label className="block text-sm font-medium text-slate-400 mb-1">Technical Brief / Description</label>
               <textarea 
                 className={`w-full bg-slate-900 border rounded-lg p-3 text-white text-sm focus:ring-2 focus:ring-nexus-500 outline-none min-h-[120px] ${errors.description ? 'border-red-500' : 'border-slate-700'}`}
                 placeholder="Describe the problem statement, goals, and scope..."

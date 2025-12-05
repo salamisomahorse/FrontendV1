@@ -2,7 +2,7 @@
 import React, { useState, useRef } from 'react';
 import { Card, Button, Input, Badge } from '../components/UI';
 import { User } from '../types';
-import { Camera, Github, Linkedin, Mail, Upload, X, FileText, Plus } from 'lucide-react';
+import { Camera, Github, Linkedin, Mail, Upload, X, FileText, Plus, Phone } from 'lucide-react';
 
 interface ProfilePageProps {
   user: User | null;
@@ -10,8 +10,18 @@ interface ProfilePageProps {
   onNotify: (t: 'success' | 'error', m: string) => void;
 }
 
+const PHONE_REGEX = /^\+[1-9]\d{1,14}$/; // Simple E.164 format regex
+
 export const ProfilePage: React.FC<ProfilePageProps> = ({ user, onUpdateUser, onNotify }) => {
   const [isEditing, setIsEditing] = useState(false);
+  
+  // Local state for editing form
+  const [formData, setFormData] = useState({
+      bio: user?.bio || 'Passionate AI Engineer focused on AgriTech solutions. Experienced in Python, TensorFlow, and React.',
+      phone: user?.phone || '',
+  });
+  const [formErrors, setFormErrors] = useState({ phone: '' });
+
   const [skills, setSkills] = useState<string[]>(user?.skills || []);
   const [newSkill, setNewSkill] = useState('');
   const [resume, setResume] = useState<string | undefined>(user?.resume);
@@ -19,15 +29,29 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({ user, onUpdateUser, on
   
   if (!user) return <div>Please login</div>;
 
+  const validate = () => {
+      const newErrors = { phone: ''};
+      if (formData.phone && !PHONE_REGEX.test(formData.phone)) {
+          newErrors.phone = 'Use international format, e.g., +254712345678';
+      }
+      setFormErrors(newErrors);
+      return !newErrors.phone;
+  };
+
   const handleSave = () => {
+    if (!validate()) {
+        onNotify('error', 'Please fix the errors on your profile.');
+        return;
+    }
     setIsEditing(false);
-    onUpdateUser({ skills, resume });
+    onUpdateUser({ skills, resume, bio: formData.bio, phone: formData.phone });
     onNotify('success', 'Profile updated successfully!');
   };
 
   const handleAddSkill = () => {
-    if (newSkill.trim() && !skills.includes(newSkill.trim())) {
-      setSkills([...skills, newSkill.trim()]);
+    const trimmedSkill = newSkill.trim();
+    if (trimmedSkill && !skills.find(s => s.toLowerCase() === trimmedSkill.toLowerCase())) {
+      setSkills([...skills, trimmedSkill]);
       setNewSkill('');
     }
   };
@@ -46,11 +70,15 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({ user, onUpdateUser, on
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
       const file = e.target.files[0];
-      // Simulate upload
       setResume(file.name);
-      onNotify('success', `Uploaded ${file.name}`);
+      onNotify('info', `Simulating upload of ${file.name}`);
     }
   };
+  
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+      const { name, value } = e.target;
+      setFormData(prev => ({...prev, [name]: value }));
+  }
 
   return (
     <div className="max-w-4xl mx-auto space-y-6 animate-fade-in">
@@ -65,7 +93,7 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({ user, onUpdateUser, on
              </div>
              <div className="mb-2">
                 <h1 className="text-2xl font-bold text-white">{user.name}</h1>
-                <p className="text-slate-400">{user.role === 'SCHOLAR' ? 'AI Engineer' : user.role}</p>
+                <p className="text-slate-400">{user.role}</p>
              </div>
           </div>
           <div className="absolute bottom-4 right-8">
@@ -85,27 +113,26 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({ user, onUpdateUser, on
              <Card className="p-6">
                 <h3 className="font-bold text-white mb-4">About</h3>
                 {isEditing ? (
-                  <textarea className="w-full bg-slate-900 border border-slate-700 rounded-lg p-3 text-white text-sm focus:ring-2 focus:ring-nexus-500 outline-none" rows={4} defaultValue="Passionate AI Engineer focused on AgriTech solutions." />
+                  <textarea className="w-full bg-slate-900 border border-slate-700 rounded-lg p-3 text-white text-sm focus:ring-2 focus:ring-nexus-500 outline-none" rows={4} name="bio" value={formData.bio} onChange={handleInputChange} />
                 ) : (
-                  <p className="text-sm text-slate-400">
-                    Passionate AI Engineer focused on AgriTech solutions. Experienced in Python, TensorFlow, and React.
-                  </p>
+                  <p className="text-sm text-slate-400">{formData.bio}</p>
                 )}
                 
                 <div className="mt-6 space-y-3">
                    <div className="flex items-center gap-2 text-sm text-slate-300">
                       <Mail size={16} className="text-slate-500" /> {user.email}
                    </div>
+                   {formData.phone && (
+                     <div className="flex items-center gap-2 text-sm text-slate-300">
+                        <Phone size={16} className="text-slate-500" /> {formData.phone}
+                     </div>
+                   )}
                    <div className="flex items-center gap-2 text-sm text-slate-300">
                       <Github size={16} className="text-slate-500" /> github.com/{user.name.split(' ')[0].toLowerCase()}
-                   </div>
-                   <div className="flex items-center gap-2 text-sm text-slate-300">
-                      <Linkedin size={16} className="text-slate-500" /> linkedin.com/in/{user.name.split(' ')[0].toLowerCase()}
                    </div>
                 </div>
              </Card>
 
-             {/* Resume Upload Section */}
              <Card className="p-6">
                 <h3 className="font-bold text-white mb-4">Resume</h3>
                 {resume ? (
@@ -126,18 +153,8 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({ user, onUpdateUser, on
                 
                 {isEditing && (
                   <div className="mt-4">
-                    <input 
-                      type="file" 
-                      ref={fileInputRef} 
-                      className="hidden" 
-                      accept=".pdf,.doc,.docx" 
-                      onChange={handleFileChange}
-                    />
-                    <Button 
-                      variant="outline" 
-                      className="w-full border-dashed" 
-                      onClick={() => fileInputRef.current?.click()}
-                    >
+                    <input type="file" ref={fileInputRef} className="hidden" accept=".pdf,.doc,.docx" onChange={handleFileChange} />
+                    <Button variant="outline" className="w-full border-dashed" onClick={() => fileInputRef.current?.click()}>
                       <Upload size={16} className="mr-2" /> Upload Resume
                     </Button>
                   </div>
@@ -149,34 +166,33 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({ user, onUpdateUser, on
              <Card className="p-6">
                 <h3 className="font-bold text-white mb-4">Personal Details</h3>
                 <div className="grid grid-cols-2 gap-4">
-                   <Input label="Full Name" defaultValue={user.name} disabled={!isEditing} />
-                   <Input label="Email Address" defaultValue={user.email} disabled={true} />
-                   <Input label="Role" defaultValue={user.role === 'SCHOLAR' ? 'AI Engineer' : user.role} disabled={true} />
-                   <Input label="Location" defaultValue="Nairobi, Kenya" disabled={!isEditing} />
+                   <Input label="Full Name" defaultValue={user.name} disabled />
+                   <Input label="Email Address" defaultValue={user.email} disabled />
+                   <Input label="Role" defaultValue={user.role} disabled />
+                   <Input 
+                     label="Phone (Optional)" 
+                     name="phone"
+                     value={formData.phone}
+                     onChange={handleInputChange}
+                     placeholder="+254712345678" 
+                     disabled={!isEditing} 
+                     error={formErrors.phone}
+                   />
                 </div>
              </Card>
 
-             {/* Dynamic Skills Section */}
              <Card className="p-6">
                 <h3 className="font-bold text-white mb-4">Technical Skills</h3>
-                <p className="text-sm text-slate-400 mb-4">
-                  Add skills to be matched with Industry Partners (e.g., Python, Computer Vision, Fintech).
-                </p>
-                
                 <div className="flex flex-wrap gap-2 mb-6">
                    {skills.map(skill => (
                       <span key={skill} className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-nexus-900/40 text-nexus-300 border border-nexus-700/50">
                         {skill}
                         {isEditing && (
-                          <button onClick={() => handleRemoveSkill(skill)} className="ml-1.5 hover:text-white focus:outline-none">
-                            <X size={12} />
-                          </button>
+                          <button onClick={() => handleRemoveSkill(skill)} className="ml-1.5 hover:text-white focus:outline-none"><X size={12} /></button>
                         )}
                       </span>
                    ))}
-                   {skills.length === 0 && !isEditing && (
-                     <span className="text-slate-500 text-sm">No skills added yet.</span>
-                   )}
+                   {skills.length === 0 && !isEditing && (<span className="text-slate-500 text-sm">No skills added yet.</span>)}
                 </div>
 
                 {isEditing && (
@@ -187,9 +203,7 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({ user, onUpdateUser, on
                       onChange={(e) => setNewSkill(e.target.value)}
                       onKeyDown={handleKeyDown}
                     />
-                    <Button variant="secondary" onClick={handleAddSkill} disabled={!newSkill.trim()}>
-                      <Plus size={16} />
-                    </Button>
+                    <Button variant="secondary" onClick={handleAddSkill} disabled={!newSkill.trim()}><Plus size={16} /></Button>
                   </div>
                 )}
              </Card>

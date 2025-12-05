@@ -1,5 +1,5 @@
 
-export type UserRole = 'GUEST' | 'ENGINEER' | 'CLIENT' | 'ADMIN';
+export type UserRole = 'GUEST' | 'TALENT' | 'CLIENT' | 'ADMIN' | 'INTERNAL_STAFF';
 
 export interface User {
   id: string;
@@ -9,6 +9,7 @@ export interface User {
   avatar?: string;
   bio?: string;
   github?: string;
+  phone?: string;
   skills?: string[];
   resume?: string; // filename or url
 }
@@ -32,12 +33,24 @@ export interface Project {
 
 export interface ProjectOutcome {
   projectId: string;
-  metricCategory: 'Performance' | 'Cost' | 'Revenue' | 'Security' | 'User Experience';
-  metricLabel: string; // e.g., "Transaction Speed"
-  metricValue: string; // e.g., "+40%"
   summary: string;
   submittedAt: string;
+
+  // Performance Metrics
+  delivery_speed_days?: number;
+  prediction_accuracy?: number; // 0-100
+  
+  // Quality & Satisfaction Metrics
+  client_satisfaction_rating?: number; // 1-5
+  code_quality_score?: number; // 1-5
+  
+  // Business Metrics
+  forecast_accuracy_percentage?: number; // 0-100
+  user_engagement_rate?: number; // 0-1
+  retention_rate?: number; // 0-1
+  requirements_completion_rate?: number; // 0-1
 }
+
 
 export interface TalentProfile {
   id: string;

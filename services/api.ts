@@ -19,10 +19,12 @@ export const registerTalent = async (formData: any): Promise<User> => {
     id: Math.random().toString(36).substr(2, 9),
     name: formData.name,
     email: formData.email,
-    role: 'ENGINEER',
+    // FIX: Changed 'ENGINEER' to 'TALENT' to match the UserRole type definition.
+    role: 'TALENT',
     skills: formData.skills || [],
     bio: formData.bio,
-    resume: formData.resume
+    resume: formData.resume,
+    phone: formData.phone,
   };
 };
 
@@ -53,6 +55,8 @@ export const getEngineerProjects = async (): Promise<Project[]> => {
 export const createProject = async (projectData: Partial<Project>, requirements: ProjectRequirement[]): Promise<Project> => {
   await new Promise(resolve => setTimeout(resolve, 1200));
 
+  console.log("POST /v1/projects", { projectData, requirements });
+
   return {
     id: Math.random().toString(36).substr(2, 9),
     title: projectData.title || 'Untitled Project',
@@ -66,7 +70,8 @@ export const createProject = async (projectData: Partial<Project>, requirements:
 
 // POST /v1/project_outcomes
 export const submitProjectOutcome = async (outcome: ProjectOutcome): Promise<boolean> => {
-  console.log("POST /v1/project_outcomes", outcome);
+  console.log("POST /v1/project_outcomes with structured data:", outcome);
   await new Promise(resolve => setTimeout(resolve, 800));
+  // In a real app, the backend would validate this payload against its schema.
   return true;
 };
