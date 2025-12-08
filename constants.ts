@@ -1,4 +1,4 @@
-import { Course, TalentProfile, AiTool, AnalyticsMetric } from './types';
+import { Course, TalentProfile, AiTool, AnalyticsMetric, ActivityItem } from './types';
 
 export const MOCK_COURSES: Course[] = [
   {
@@ -78,8 +78,16 @@ export const FEATURED_TOOLS: AiTool[] = [
 ];
 
 export const ADMIN_STATS: AnalyticsMetric[] = [
-  { label: 'Total Engineers', value: '1,240', trend: 'up', percentage: '+12%' },
+  { label: 'Total Talent', value: '1,240', trend: 'up', percentage: '+12%' },
   { label: 'Active Projects', value: '85', trend: 'up', percentage: '+5%' },
   { label: 'Client Partners', value: '42', trend: 'up', percentage: '+3%' },
   { label: 'Placement Rate', value: '78%', trend: 'neutral', percentage: '0%' },
+];
+
+export const MOCK_ACTIVITY_FEED: ActivityItem[] = [
+  { id: '1', type: 'OUTCOME_SUBMITTED', description: 'submitted an outcome for "Fintech Credit Risk API"', actor: 'John Doe', timestamp: '5m ago' },
+  { id: '2', type: 'PROJECT_CREATED', description: 'created a new project "AgriScan Expansion"', actor: 'Tech Corp', timestamp: '1h ago' },
+  { id: '3', type: 'TALENT_ONBOARDED', description: 'completed onboarding', actor: 'Zahra Hassan', timestamp: '3h ago' },
+  { id: '4', type: 'MATCH_CONFIRMED', description: 'was matched to "Crop Disease Model"', actor: 'Kwame Osei', timestamp: '1d ago' },
+  { id: '5', type: 'OUTCOME_SUBMITTED', description: 'submitted an outcome for "Health Data Privacy"', actor: 'Amara Diop', timestamp: '2d ago' },
 ];

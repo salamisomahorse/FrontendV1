@@ -1,17 +1,26 @@
+
 import React from 'react';
 import { Card, Badge } from '../components/UI';
-import { ADMIN_STATS } from '../constants';
+import { ADMIN_STATS, MOCK_ACTIVITY_FEED } from '../constants';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line } from 'recharts';
+import { Briefcase, UserPlus, CheckCircle, FileText } from 'lucide-react';
 
 const data = [
-  { name: 'Jan', engineers: 400, placed: 240 },
-  { name: 'Feb', engineers: 300, placed: 139 },
-  { name: 'Mar', engineers: 200, placed: 980 },
-  { name: 'Apr', engineers: 278, placed: 390 },
-  { name: 'May', engineers: 189, placed: 480 },
-  { name: 'Jun', engineers: 239, placed: 380 },
-  { name: 'Jul', engineers: 349, placed: 430 },
+  { name: 'Jan', talent: 400, placed: 240 },
+  { name: 'Feb', talent: 300, placed: 139 },
+  { name: 'Mar', talent: 200, placed: 980 },
+  { name: 'Apr', talent: 278, placed: 390 },
+  { name: 'May', talent: 189, placed: 480 },
+  { name: 'Jun', talent: 239, placed: 380 },
+  { name: 'Jul', talent: 349, placed: 430 },
 ];
+
+const activityIcons = {
+  PROJECT_CREATED: <Briefcase size={16} className="text-blue-400" />,
+  TALENT_ONBOARDED: <UserPlus size={16} className="text-green-400" />,
+  OUTCOME_SUBMITTED: <FileText size={16} className="text-yellow-400" />,
+  MATCH_CONFIRMED: <CheckCircle size={16} className="text-nexus-400" />,
+};
 
 export const AdminDashboard: React.FC = () => {
   return (
@@ -33,43 +42,52 @@ export const AdminDashboard: React.FC = () => {
         ))}
       </div>
 
-      {/* Charts */}
-      <div className="grid md:grid-cols-2 gap-6">
-        <Card className="p-6 h-80">
-          <h3 className="text-lg font-bold text-white mb-4">Engineer Enrollment vs Placements</h3>
-          <ResponsiveContainer width="100%" height="100%">
-            <BarChart data={data}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#334155" />
-              <XAxis dataKey="name" stroke="#94a3b8" />
-              <YAxis stroke="#94a3b8" />
-              <Tooltip 
-                contentStyle={{ backgroundColor: '#1e293b', border: '1px solid #334155', color: '#fff' }}
-              />
-              <Bar dataKey="engineers" fill="#10b981" />
-              <Bar dataKey="placed" fill="#3b82f6" />
-            </BarChart>
-          </ResponsiveContainer>
-        </Card>
-
-        <Card className="p-6 h-80">
-          <h3 className="text-lg font-bold text-white mb-4">Platform Growth</h3>
-           <ResponsiveContainer width="100%" height="100%">
-            <LineChart data={data}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#334155" />
-              <XAxis dataKey="name" stroke="#94a3b8" />
-              <YAxis stroke="#94a3b8" />
-              <Tooltip 
-                 contentStyle={{ backgroundColor: '#1e293b', border: '1px solid #334155', color: '#fff' }}
-              />
-              <Line type="monotone" dataKey="engineers" stroke="#10b981" strokeWidth={2} />
-            </LineChart>
-          </ResponsiveContainer>
+      <div className="grid md:grid-cols-3 gap-6">
+        <div className="md:col-span-2 space-y-6">
+          {/* Charts */}
+          <Card className="p-6 h-80">
+            <h3 className="text-lg font-bold text-white mb-4">Talent Enrollment vs Placements</h3>
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart data={data} margin={{ top: 5, right: 20, left: -10, bottom: 5 }}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#334155" />
+                <XAxis dataKey="name" stroke="#94a3b8" fontSize={12} />
+                <YAxis stroke="#94a3b8" fontSize={12} />
+                <Tooltip 
+                  contentStyle={{ backgroundColor: '#1e293b', border: '1px solid #334155', color: '#fff' }}
+                />
+                <Bar dataKey="talent" fill="#10b981" />
+                <Bar dataKey="placed" fill="#3b82f6" />
+              </BarChart>
+            </ResponsiveContainer>
+          </Card>
+        </div>
+        
+        {/* Live Transaction Feed */}
+        <Card className="p-0 flex flex-col h-[22rem] md:h-auto">
+          <h3 className="text-lg font-bold text-white p-6 border-b border-slate-800 flex-shrink-0">Live Transaction Feed</h3>
+          <div className="flex-grow overflow-y-auto">
+            <ul className="divide-y divide-slate-800">
+              {MOCK_ACTIVITY_FEED.map(item => (
+                <li key={item.id} className="p-4 flex items-start gap-3 hover:bg-slate-800/50">
+                  <div className="h-8 w-8 rounded-full bg-slate-700 flex items-center justify-center flex-shrink-0 mt-1">
+                    {activityIcons[item.type]}
+                  </div>
+                  <div>
+                    <p className="text-sm text-slate-300">
+                      <span className="font-bold text-white">{item.actor}</span> {item.description}
+                    </p>
+                    <p className="text-xs text-slate-500 mt-1">{item.timestamp}</p>
+                  </div>
+                </li>
+              ))}
+            </ul>
+          </div>
         </Card>
       </div>
 
       {/* Recent Applications */}
       <Card className="p-6 overflow-hidden">
-        <h3 className="text-lg font-bold text-white mb-4">Recent Scholar Applications</h3>
+        <h3 className="text-lg font-bold text-white mb-4">Recent Talent Applications</h3>
         <div className="overflow-x-auto">
           <table className="w-full text-left text-sm text-slate-400">
             <thead className="text-xs uppercase bg-slate-900 text-slate-300">

@@ -69,6 +69,14 @@ export interface AnalyticsMetric {
   percentage: string;
 }
 
+export interface ActivityItem {
+  id: string;
+  type: 'PROJECT_CREATED' | 'TALENT_ONBOARDED' | 'OUTCOME_SUBMITTED' | 'MATCH_CONFIRMED';
+  description: string;
+  actor: string; // user name
+  timestamp: string; // e.g., "2 minutes ago"
+}
+
 export interface Job {
   id: string;
   title: string;
