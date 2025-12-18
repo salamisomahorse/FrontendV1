@@ -2,7 +2,7 @@
 import React, { useState } from 'react';
 import { User } from '../types';
 import { Button } from './UI';
-import { Menu, X, LayoutDashboard, Briefcase, Globe, LogOut, ChevronRight, User as UserIcon } from 'lucide-react';
+import { Menu, X, LayoutDashboard, Briefcase, Globe, LogOut, ChevronRight, User as UserIcon, ShieldAlert, Settings } from 'lucide-react';
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -34,6 +34,8 @@ export const Layout: React.FC<LayoutProps> = ({ children, user, onNavigate, onLo
         return [
           { id: 'admin', label: 'Admin Panel', icon: LayoutDashboard },
           { id: 'industry', label: 'Industry Portal', icon: Briefcase },
+          { id: 'fraud_dashboard', label: 'Fraud Center', icon: ShieldAlert },
+          { id: 'fraud_rules', label: 'Rule Configuration', icon: Settings },
         ];
       default:
         return [{ id: 'landing', label: 'Home', icon: Globe }];
@@ -52,6 +54,8 @@ export const Layout: React.FC<LayoutProps> = ({ children, user, onNavigate, onLo
       'profile': 'Profile',
       'login': 'Authentication',
       'create_project': 'Create Project',
+      'fraud_dashboard': 'Fraud Detection Center',
+      'fraud_rules': 'Fraud Rule Configuration'
     };
     return map[currentPage] || 'Page';
   };

@@ -8,6 +8,8 @@ import { IndustryPortal } from './pages/IndustryPortal';
 import { AdminDashboard } from './pages/AdminDashboard';
 import { ProfilePage } from './pages/ProfilePage';
 import { CreateProjectPage } from './pages/CreateProjectPage';
+import { FraudDashboard } from './pages/FraudDashboard';
+import { FraudRuleConfiguration } from './pages/FraudRuleConfiguration';
 import { User, UserRole, Notification } from './types';
 import { Card, Button, Input, Toast } from './components/UI';
 
@@ -56,7 +58,7 @@ export default function App() {
         const role = user.role;
         const talentPages = ['talent_dashboard', 'profile'];
         const clientPages = ['industry', 'profile', 'create_project'];
-        const adminPages = ['admin', 'industry']; // Admins can see industry portal
+        const adminPages = ['admin', 'industry', 'fraud_dashboard', 'fraud_rules'];
 
         if (role === 'TALENT' && !talentPages.includes(page)) {
             addNotification('error', 'Forbidden: Access denied.');
@@ -182,6 +184,8 @@ export default function App() {
       case 'admin': return <AdminDashboard />;
       case 'profile': return <ProfilePage user={user} onUpdateUser={(d) => user && setUser({...user, ...d})} onNotify={addNotification} />;
       case 'create_project': return <CreateProjectPage onNavigate={handleNavigate} onNotify={addNotification} />;
+      case 'fraud_dashboard': return <FraudDashboard onNotify={addNotification} />;
+      case 'fraud_rules': return <FraudRuleConfiguration onNotify={addNotification} />;
       default: return <LandingPage onNavigate={handleNavigate} />;
     }
   };

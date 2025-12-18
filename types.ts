@@ -77,6 +77,24 @@ export interface ActivityItem {
   timestamp: string; // e.g., "2 minutes ago"
 }
 
+export interface FraudAlert {
+  id: string;
+  severity: 'Low' | 'Medium' | 'High';
+  description: string;
+  timestamp: string;
+  transactionId: string;
+  userId: string;
+}
+
+export interface FraudRule {
+  id: string;
+  name: string;
+  description: string;
+  isEnabled: boolean;
+  threshold: number; // e.g., transaction amount
+  condition: 'GREATER_THAN' | 'LESS_THAN';
+}
+
 export interface Job {
   id: string;
   title: string;

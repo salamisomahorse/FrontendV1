@@ -1,5 +1,6 @@
 
-import { User, ProjectOutcome, Project, ProjectRequirement } from '../types';
+import { User, ProjectOutcome, Project, ProjectRequirement, FraudAlert, FraudRule } from '../types';
+import { MOCK_FRAUD_ALERTS, MOCK_FRAUD_RULES } from '../constants';
 
 /**
  * MOCK API SERVICE
@@ -74,4 +75,29 @@ export const submitProjectOutcome = async (outcome: ProjectOutcome): Promise<boo
   await new Promise(resolve => setTimeout(resolve, 800));
   // In a real app, the backend would validate this payload against its schema.
   return true;
+};
+
+
+let fraudRulesDB = [...MOCK_FRAUD_RULES]; // a mutable copy for simulation
+
+// GET /v1/fraud/alerts
+export const getFraudAlerts = async (): Promise<FraudAlert[]> => {
+  await new Promise(resolve => setTimeout(resolve, 500));
+  return MOCK_FRAUD_ALERTS;
+};
+
+// GET /v1/fraud/rules
+export const getFraudRules = async (): Promise<FraudRule[]> => {
+  await new Promise(resolve => setTimeout(resolve, 400));
+  return fraudRulesDB;
+};
+
+// PATCH /v1/fraud/rules/:id
+export const updateFraudRule = async (ruleId: string, updates: Partial<FraudRule>): Promise<FraudRule> => {
+  await new Promise(resolve => setTimeout(resolve, 300));
+  const ruleIndex = fraudRulesDB.findIndex(r => r.id === ruleId);
+  if (ruleIndex === -1) throw new Error('Rule not found');
+  
+  fraudRulesDB[ruleIndex] = { ...fraudRulesDB[ruleIndex], ...updates };
+  return fraudRulesDB[ruleIndex];
 };
